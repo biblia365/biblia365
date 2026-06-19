@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
+﻿import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const protectedRoutes = ["/perfil", "/favoritos", "/planes", "/admin"]
+  const protectedRoutes = ["/perfil", "/favoritos", "/planes"]
   const adminRoutes = ["/admin"]
   const authRoutes = ["/auth/login", "/auth/register", "/auth/recover"]
 
@@ -43,14 +43,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 
-  if (isAdmin && user) {
-    const { data: usuario } = await supabase
-      .from("usuarios")
-      .select("rol")
+  if (isAdmin) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/auth/login", request.url))
+    }
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
       .eq("id", user.id)
       .single()
-
-    if (usuario?.rol !== "admin") {
+    if (profile?.role !== "admin") {
       return NextResponse.redirect(new URL("/", request.url))
     }
   }
