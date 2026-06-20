@@ -1,9 +1,8 @@
-﻿import { createServerClient } from "@supabase/ssr"
+import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,8 +25,7 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  const protectedRoutes = ["/perfil", "/favoritos", "/planes"]
+  const protectedRoutes = ["/perfil"]
   const adminRoutes = ["/admin"]
   const authRoutes = ["/auth/login", "/auth/register", "/auth/recover"]
 
