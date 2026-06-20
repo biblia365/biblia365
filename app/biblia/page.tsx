@@ -246,7 +246,7 @@ export default function BibliaPage() {
                       onClick={e => { e.stopPropagation(); toggleFavorite(v) }}
                       className="shrink-0 mt-1 "
                     >
-                      {isFav ? "❤️" : "🤍"}
+                      {isFav ? "â¤ï¸" : "ðŸ¤"}
                     </button>
                   </div>
                 )
