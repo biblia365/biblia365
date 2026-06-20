@@ -33,6 +33,8 @@ export default function BibliaPage() {
   const [loadingBooks, setLoadingBooks] = useState(true)
   const [loadingVerses, setLoadingVerses] = useState(false)
   const supabase = createClient()
+  console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log("KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0,20))
 
   useEffect(() => {
     async function loadBooks() {
