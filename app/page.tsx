@@ -25,7 +25,7 @@ export default function Home() {
 
           <div className="mt-10 flex gap-4">
             <Link href="/biblia" className="rounded-xl bg-[#D4AF37] px-8 py-4 font-semibold text-black transition hover:opacity-90">
-              Comenzar
+              Biblia
             </Link>
             <Link href="/frase-del-dia" className="rounded-xl border border-[#D4AF37] px-8 py-4 font-semibold transition hover:bg-[#D4AF37] hover:text-black">
               Versiculo del Dia
