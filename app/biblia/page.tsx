@@ -32,9 +32,8 @@ export default function BibliaPage() {
   const [verses, setVerses] = useState<Verse[]>([])
   const [loadingBooks, setLoadingBooks] = useState(true)
   const [loadingVerses, setLoadingVerses] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const supabase = createClient()
-  console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-  console.log("KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0,20))
 
   useEffect(() => {
     async function loadBooks() {
@@ -65,6 +64,7 @@ export default function BibliaPage() {
     setSelectedChapter(null)
     setVerses([])
     setChapters([])
+    setSidebarOpen(false)
     const { data } = await supabase
       .from("chapters")
       .select("*")
@@ -81,11 +81,53 @@ export default function BibliaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* Boton menu movil */}
+      <div className="md:hidden flex items-center gap-3 bg-white border-b px-4 py-3">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-[#061B44] font-semibold text-sm border border-gray-300 rounded-lg px-3 py-1.5"
+        >
+          {selectedBook ? selectedBook.name : "Seleccionar libro"}
+        </button>
+        {selectedChapter && (
+          <select
+            value={selectedChapter?.id ?? ""}
+            onChange={e => {
+              const ch = chapters.find(c => c.id === Number(e.target.value))
+              if (ch) loadVerses(ch)
+            }}
+            className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none"
+          >
+            {chapters.map(ch => (
+              <option key={ch.id} value={ch.id}>Cap. {ch.number}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Overlay movil */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
 
-        <aside className="w-64 shrink-0">
-          <div className="bg-white rounded-xl shadow p-4 sticky top-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="font-bold text-lg mb-3 text-gray-800">Libros</h2>
+        {/* Sidebar */}
+        <aside className={`
+          fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-xl transform transition-transform duration-300 md:static md:w-64 md:shadow-none md:z-auto md:transform-none md:translate-x-0 md:block
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}>
+          <div className="p-4 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-3 md:hidden">
+              <h2 className="font-bold text-lg text-gray-800">Libros</h2>
+              <button onClick={() => setSidebarOpen(false)} className="text-gray-500 text-xl">x</button>
+            </div>
+            <h2 className="hidden md:block font-bold text-lg mb-3 text-gray-800">Libros</h2>
+
             {loadingBooks && <p className="text-sm text-gray-400">Cargando...</p>}
             {!loadingBooks && (
               <>
@@ -122,7 +164,8 @@ export default function BibliaPage() {
           </div>
         </aside>
 
-        <main className="flex-1">
+        {/* Panel versiculos */}
+        <main className="flex-1 min-w-0">
           {!selectedBook && (
             <div className="bg-white rounded-xl shadow p-10 text-center text-gray-400">
               <p className="text-xl font-semibold">Selecciona un libro para comenzar</p>
@@ -131,7 +174,7 @@ export default function BibliaPage() {
 
           {selectedBook && (
             <div className="bg-white rounded-xl shadow p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="hidden md:flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold text-[#061B44]">{selectedBook.name}</h1>
                 <select
                   value={selectedChapter?.id ?? ""}
@@ -146,6 +189,10 @@ export default function BibliaPage() {
                   ))}
                 </select>
               </div>
+
+              <h2 className="text-lg font-semibold text-gray-600 mb-4">
+                {selectedBook.name} {selectedChapter?.number}
+              </h2>
 
               {loadingVerses && <p className="text-gray-400">Cargando versiculos...</p>}
 
