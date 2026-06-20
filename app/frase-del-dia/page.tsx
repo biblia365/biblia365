@@ -15,6 +15,14 @@ interface Phrase {
 const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"]
 const MONTHS_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
+function getLocalDateStr() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, "0")
+  const d = String(now.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
 export default function FraseDelDiaPage() {
   const [phrase, setPhrase] = useState<Phrase | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,7 +34,7 @@ export default function FraseDelDiaPage() {
   const month = MONTHS_ES[today.getMonth()]
   const year = today.getFullYear()
   const dateLabel = `${dayName} ${day} de ${month} del ${year}`
-  const todayStr = today.toISOString().split("T")[0]
+  const todayStr = getLocalDateStr()
 
   useEffect(() => {
     async function loadPhrase() {
