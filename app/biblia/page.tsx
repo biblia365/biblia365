@@ -244,7 +244,7 @@ export default function BibliaPage() {
                     <span className={`${FONT_SIZES[fontIdx]} ${theme.text} flex-1`}>{v.text}</span>
                     <button
                       onClick={e => { e.stopPropagation(); toggleFavorite(v) }}
-                      className="shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="shrink-0 mt-1 "
                     >
                       {isFav ? "❤️" : "🤍"}
                     </button>
