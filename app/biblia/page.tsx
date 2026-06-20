@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase"
 
 interface Book {
@@ -36,32 +36,17 @@ export default function BibliaPage() {
 
   useEffect(() => {
     async function loadBooks() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("books")
         .select("*")
         .order("book_order")
-      if (!error && data) setBooks(data)
+      if (data) setBooks(data)
       setLoadingBooks(false)
     }
     loadBooks()
   }, [])
 
-  async function selectBook(book: Book) {
-    setSelectedBook(book)
-    setSelectedChapter(null)
-    setVerses([])
-    const { data } = await supabase
-      .from("chapters")
-      .select("*")
-      .eq("book_id", book.id)
-      .order("number")
-    if (data && data.length > 0) {
-      setChapters(data)
-      selectChapter(data[0])
-    }
-  }
-
-  async function selectChapter(chapter: Chapter) {
+  const loadVerses = useCallback(async (chapter: Chapter) => {
     setSelectedChapter(chapter)
     setLoadingVerses(true)
     const { data } = await supabase
@@ -71,7 +56,23 @@ export default function BibliaPage() {
       .order("number")
     if (data) setVerses(data)
     setLoadingVerses(false)
-  }
+  }, [supabase])
+
+  const loadChapters = useCallback(async (book: Book) => {
+    setSelectedBook(book)
+    setSelectedChapter(null)
+    setVerses([])
+    setChapters([])
+    const { data } = await supabase
+      .from("chapters")
+      .select("*")
+      .eq("book_id", book.id)
+      .order("number")
+    if (data && data.length > 0) {
+      setChapters(data)
+      await loadVerses(data[0])
+    }
+  }, [supabase, loadVerses])
 
   const otBooks = books.filter(b => b.testament === "OT")
   const ntBooks = books.filter(b => b.testament === "NT")
@@ -90,7 +91,7 @@ export default function BibliaPage() {
                 {otBooks.map(book => (
                   <button
                     key={book.id}
-                    onClick={() => selectBook(book)}
+                    onClick={() => loadChapters(book)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
                       selectedBook?.id === book.id
                         ? "bg-[#061B44] text-white font-semibold"
@@ -104,7 +105,7 @@ export default function BibliaPage() {
                 {ntBooks.map(book => (
                   <button
                     key={book.id}
-                    onClick={() => selectBook(book)}
+                    onClick={() => loadChapters(book)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
                       selectedBook?.id === book.id
                         ? "bg-[#061B44] text-white font-semibold"
@@ -134,7 +135,7 @@ export default function BibliaPage() {
                   value={selectedChapter?.id ?? ""}
                   onChange={e => {
                     const ch = chapters.find(c => c.id === Number(e.target.value))
-                    if (ch) selectChapter(ch)
+                    if (ch) loadVerses(ch)
                   }}
                   className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
                 >
@@ -158,7 +159,7 @@ export default function BibliaPage() {
                   <button
                     onClick={() => {
                       const idx = chapters.findIndex(c => c.id === selectedChapter?.id)
-                      if (idx > 0) selectChapter(chapters[idx - 1])
+                      if (idx > 0) loadVerses(chapters[idx - 1])
                     }}
                     disabled={chapters.findIndex(c => c.id === selectedChapter?.id) === 0}
                     className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm disabled:opacity-40 hover:bg-gray-200 transition-colors"
@@ -168,7 +169,7 @@ export default function BibliaPage() {
                   <button
                     onClick={() => {
                       const idx = chapters.findIndex(c => c.id === selectedChapter?.id)
-                      if (idx < chapters.length - 1) selectChapter(chapters[idx + 1])
+                      if (idx < chapters.length - 1) loadVerses(chapters[idx + 1])
                     }}
                     disabled={chapters.findIndex(c => c.id === selectedChapter?.id) === chapters.length - 1}
                     className="px-4 py-2 rounded-lg bg-[#D4AF37] text-black text-sm disabled:opacity-40 hover:opacity-90 transition-colors"
