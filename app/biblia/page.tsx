@@ -29,6 +29,7 @@ export default function BibliaPage() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
+  const [selectedVerse, setSelectedVerse] = useState<number | null>(null)
   const [verses, setVerses] = useState<Verse[]>([])
   const [loadingBooks, setLoadingBooks] = useState(true)
   const [loadingVerses, setLoadingVerses] = useState(false)
@@ -37,10 +38,7 @@ export default function BibliaPage() {
 
   useEffect(() => {
     async function loadBooks() {
-      const { data } = await supabase
-        .from("books")
-        .select("*")
-        .order("book_order")
+      const { data } = await supabase.from("books").select("*").order("book_order")
       if (data) setBooks(data)
       setLoadingBooks(false)
     }
@@ -49,12 +47,9 @@ export default function BibliaPage() {
 
   const loadVerses = useCallback(async (chapter: Chapter) => {
     setSelectedChapter(chapter)
+    setSelectedVerse(null)
     setLoadingVerses(true)
-    const { data } = await supabase
-      .from("verses")
-      .select("*")
-      .eq("chapter_id", chapter.id)
-      .order("number")
+    const { data } = await supabase.from("verses").select("*").eq("chapter_id", chapter.id).order("number")
     if (data) setVerses(data)
     setLoadingVerses(false)
   }, [supabase])
@@ -62,14 +57,11 @@ export default function BibliaPage() {
   const loadChapters = useCallback(async (book: Book) => {
     setSelectedBook(book)
     setSelectedChapter(null)
+    setSelectedVerse(null)
     setVerses([])
     setChapters([])
     setSidebarOpen(false)
-    const { data } = await supabase
-      .from("chapters")
-      .select("*")
-      .eq("book_id", book.id)
-      .order("number")
+    const { data } = await supabase.from("chapters").select("*").eq("book_id", book.id).order("number")
     if (data && data.length > 0) {
       setChapters(data)
       await loadVerses(data[0])
@@ -78,12 +70,13 @@ export default function BibliaPage() {
 
   const otBooks = books.filter(b => b.testament === "OT")
   const ntBooks = books.filter(b => b.testament === "NT")
+  const currentChapterIdx = chapters.findIndex(c => c.id === selectedChapter?.id)
 
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Boton menu movil */}
-      <div className="md:hidden flex items-center gap-3 bg-white border-b px-4 py-3">
+      {/* Barra movil */}
+      <div className="md:hidden flex items-center gap-3 bg-white border-b px-4 py-3 sticky top-0 z-30">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-[#061B44] font-semibold text-sm border border-gray-300 rounded-lg px-3 py-1.5"
@@ -108,54 +101,41 @@ export default function BibliaPage() {
 
       {/* Overlay movil */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
 
         {/* Sidebar */}
         <aside className={`
-          fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-xl transform transition-transform duration-300 md:static md:w-64 md:shadow-none md:z-auto md:transform-none md:translate-x-0 md:block
+          fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-xl transform transition-transform duration-300
+          md:static md:w-64 md:shadow-none md:z-auto md:translate-x-0 md:block
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}>
           <div className="p-4 h-full overflow-y-auto">
             <div className="flex items-center justify-between mb-3 md:hidden">
               <h2 className="font-bold text-lg text-gray-800">Libros</h2>
-              <button onClick={() => setSidebarOpen(false)} className="text-gray-500 text-xl">x</button>
+              <button onClick={() => setSidebarOpen(false)} className="text-gray-500 text-xl font-bold">x</button>
             </div>
             <h2 className="hidden md:block font-bold text-lg mb-3 text-gray-800">Libros</h2>
-
             {loadingBooks && <p className="text-sm text-gray-400">Cargando...</p>}
             {!loadingBooks && (
               <>
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Antiguo Testamento</p>
                 {otBooks.map(book => (
-                  <button
-                    key={book.id}
-                    onClick={() => loadChapters(book)}
+                  <button key={book.id} onClick={() => loadChapters(book)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
-                      selectedBook?.id === book.id
-                        ? "bg-[#061B44] text-white font-semibold"
-                        : "hover:bg-gray-100 text-gray-700"
-                    }`}
-                  >
+                      selectedBook?.id === book.id ? "bg-[#061B44] text-white font-semibold" : "hover:bg-gray-100 text-gray-700"
+                    }`}>
                     {book.name}
                   </button>
                 ))}
                 <p className="text-xs font-semibold text-gray-400 uppercase mt-4 mb-2">Nuevo Testamento</p>
                 {ntBooks.map(book => (
-                  <button
-                    key={book.id}
-                    onClick={() => loadChapters(book)}
+                  <button key={book.id} onClick={() => loadChapters(book)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
-                      selectedBook?.id === book.id
-                        ? "bg-[#061B44] text-white font-semibold"
-                        : "hover:bg-gray-100 text-gray-700"
-                    }`}
-                  >
+                      selectedBook?.id === book.id ? "bg-[#061B44] text-white font-semibold" : "hover:bg-gray-100 text-gray-700"
+                    }`}>
                     {book.name}
                   </button>
                 ))}
@@ -190,40 +170,42 @@ export default function BibliaPage() {
                 </select>
               </div>
 
-              <h2 className="text-lg font-semibold text-gray-600 mb-4">
+              <h2 className="text-lg font-semibold text-gray-500 mb-4">
                 {selectedBook.name} {selectedChapter?.number}
               </h2>
 
               {loadingVerses && <p className="text-gray-400">Cargando versiculos...</p>}
 
               {!loadingVerses && verses.map(v => (
-                <p key={v.id} className="mb-3 text-gray-800 leading-relaxed">
-                  <span className="font-bold text-[#D4AF37] mr-2">{v.number}</span>
-                  {v.text}
+                <p
+                  key={v.id}
+                  onClick={() => setSelectedVerse(v.number === selectedVerse ? null : v.number)}
+                  className={`mb-2 leading-relaxed rounded-lg px-3 py-2 cursor-pointer transition-colors ${
+                    selectedVerse === v.number
+                      ? "bg-amber-50 border-l-4 border-[#D4AF37] shadow-sm"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="font-bold text-[#D4AF37] mr-2 text-sm">{v.number}</span>
+                  <span className="text-gray-800">{v.text}</span>
                 </p>
               ))}
 
               {!loadingVerses && verses.length > 0 && (
                 <div className="flex justify-between mt-8 pt-4 border-t">
                   <button
-                    onClick={() => {
-                      const idx = chapters.findIndex(c => c.id === selectedChapter?.id)
-                      if (idx > 0) loadVerses(chapters[idx - 1])
-                    }}
-                    disabled={chapters.findIndex(c => c.id === selectedChapter?.id) === 0}
+                    onClick={() => { if (currentChapterIdx > 0) loadVerses(chapters[currentChapterIdx - 1]) }}
+                    disabled={currentChapterIdx === 0}
                     className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm disabled:opacity-40 hover:bg-gray-200 transition-colors"
                   >
-                    Anterior
+                    Capitulo anterior
                   </button>
                   <button
-                    onClick={() => {
-                      const idx = chapters.findIndex(c => c.id === selectedChapter?.id)
-                      if (idx < chapters.length - 1) loadVerses(chapters[idx + 1])
-                    }}
-                    disabled={chapters.findIndex(c => c.id === selectedChapter?.id) === chapters.length - 1}
+                    onClick={() => { if (currentChapterIdx < chapters.length - 1) loadVerses(chapters[currentChapterIdx + 1]) }}
+                    disabled={currentChapterIdx === chapters.length - 1}
                     className="px-4 py-2 rounded-lg bg-[#D4AF37] text-black text-sm disabled:opacity-40 hover:opacity-90 transition-colors"
                   >
-                    Siguiente
+                    Capitulo siguiente
                   </button>
                 </div>
               )}
