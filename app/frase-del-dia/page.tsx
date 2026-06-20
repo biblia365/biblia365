@@ -43,8 +43,8 @@ export default function FraseDelDiaPage() {
         .select("*")
         .eq("scheduled_date", todayStr)
         .eq("published", true)
-        .single()
-      setPhrase(data)
+        .limit(1)
+      if (data && data.length > 0) setPhrase(data[0])
       setLoading(false)
     }
     loadPhrase()
