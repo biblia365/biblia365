@@ -25,34 +25,15 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const protectedRoutes = ["/perfil"]
-  const adminRoutes = ["/admin"]
   const authRoutes = ["/auth/login", "/auth/register", "/auth/recover"]
-
-  const isProtected = protectedRoutes.some(r => request.nextUrl.pathname.startsWith(r))
-  const isAdmin = adminRoutes.some(r => request.nextUrl.pathname.startsWith(r))
   const isAuth = authRoutes.some(r => request.nextUrl.pathname.startsWith(r))
-
-  if (!user && isProtected) {
-    return NextResponse.redirect(new URL("/auth/login", request.url))
-  }
 
   if (user && isAuth) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 
-  if (isAdmin) {
-    if (!user) {
-      return NextResponse.redirect(new URL("/auth/login", request.url))
-    }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
-    if (profile?.role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url))
-    }
+  if (!user && request.nextUrl.pathname.startsWith("/perfil")) {
+    return NextResponse.redirect(new URL("/auth/login", request.url))
   }
 
   return supabaseResponse
