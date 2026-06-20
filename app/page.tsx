@@ -1,6 +1,20 @@
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const visited = sessionStorage.getItem("visited")
+    if (!visited) {
+      sessionStorage.setItem("visited", "true")
+      router.push("/splash")
+    }
+  }, [router])
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#061B44] to-[#020817] text-white">
       <div className="container mx-auto px-6 py-16">
