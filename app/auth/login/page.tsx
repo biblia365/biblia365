@@ -38,7 +38,7 @@ export default function LoginPage() {
     if (profile?.role === "admin") {
       router.push("/admin")
     } else {
-      router.push("/biblia")
+      router.push("/inicio")
     }
     router.refresh()
   }
@@ -68,7 +68,7 @@ export default function LoginPage() {
             onChange={e => setPassword(e.target.value)}
             required
             className="w-full rounded-xl bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 focus:outline-none focus:border-[#D4AF37]"
-            placeholder="••••••••"
+            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
           />
         </div>
 
