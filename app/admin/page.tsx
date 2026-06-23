@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 export default function AdminPage() {
-  const [stats, setStats] = useState({ users: 0, phrases: 0, devotionals: 0 })
+  const [stats, setStats] = useState({ users: 0, phrases: 0, audios: 0, videos: 0, noticias: 0 })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
@@ -14,25 +14,23 @@ export default function AdminPage() {
     async function check() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push("/auth/login"); return }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
-
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
       if (profile?.role !== "admin") { router.push("/"); return }
 
-      const [users, phrases, devotionals] = await Promise.all([
+      const [users, phrases, audios, videos, noticias] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("phrases").select("id", { count: "exact", head: true }),
-        supabase.from("devotionals").select("id", { count: "exact", head: true }),
+        supabase.from("audios").select("id", { count: "exact", head: true }),
+        supabase.from("videos").select("id", { count: "exact", head: true }),
+        supabase.from("noticias").select("id", { count: "exact", head: true }),
       ])
 
       setStats({
         users: users.count ?? 0,
         phrases: phrases.count ?? 0,
-        devotionals: devotionals.count ?? 0,
+        audios: audios.count ?? 0,
+        videos: videos.count ?? 0,
+        noticias: noticias.count ?? 0,
       })
       setLoading(false)
     }
@@ -45,43 +43,44 @@ export default function AdminPage() {
     </div>
   )
 
+  const cards = [
+    { label: "Usuarios", value: stats.users, color: "border-[#D4AF37]" },
+    { label: "Versiculos del dia", value: stats.phrases, color: "border-[#061B44]" },
+    { label: "Audios", value: stats.audios, color: "border-green-500" },
+    { label: "Videos", value: stats.videos, color: "border-blue-500" },
+    { label: "Noticias", value: stats.noticias, color: "border-purple-500" },
+  ]
+
+  const modules = [
+    { href: "/admin/frases", label: "Versiculos del dia", desc: "Agregar y gestionar versiculos programados." },
+    { href: "/admin/audios", label: "Audios diarios", desc: "Subir reflexiones de audio para cada dia." },
+    { href: "/admin/videos", label: "Videos", desc: "Agregar predicas y ensenanzas de YouTube." },
+    { href: "/admin/musica", label: "Musica", desc: "Agregar alabanzas y musica cristiana." },
+    { href: "/admin/noticias", label: "Noticias", desc: "Publicar noticias y anuncios." },
+    { href: "/admin/usuarios", label: "Usuarios", desc: "Ver y gestionar usuarios registrados." },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 py-10 px-4 pb-20">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-[#061B44] mb-8">Panel Admin</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-xl shadow p-6 border-l-4 border-[#D4AF37]">
-            <p className="text-sm text-gray-500 mb-1">Usuarios</p>
-            <p className="text-4xl font-bold text-[#061B44]">{stats.users}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow p-6 border-l-4 border-[#061B44]">
-            <p className="text-sm text-gray-500 mb-1">Versiculos del dia</p>
-            <p className="text-4xl font-bold text-[#061B44]">{stats.phrases}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow p-6 border-l-4 border-green-500">
-            <p className="text-sm text-gray-500 mb-1">Devocionales</p>
-            <p className="text-4xl font-bold text-[#061B44]">{stats.devotionals}</p>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+          {cards.map(c => (
+            <div key={c.label} className={`bg-white rounded-xl shadow p-4 border-l-4 ${c.color}`}>
+              <p className="text-xs text-gray-500 mb-1">{c.label}</p>
+              <p className="text-3xl font-bold text-[#061B44]">{c.value}</p>
+            </div>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <a href="/admin/frases" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-[#061B44] mb-2">Versiculos del dia</h2>
-            <p className="text-gray-500 text-sm">Agregar y gestionar versiculos programados.</p>
-          </a>
-          <a href="/admin/audios" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-[#061B44] mb-2">Audios diarios</h2>
-            <p className="text-gray-500 text-sm">Subir reflexiones de audio para cada dia.</p>
-          </a>
-          <a href="/admin/devocionales" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-[#061B44] mb-2">Devocionales</h2>
-            <p className="text-gray-500 text-sm">Gestionar el libro devocional.</p>
-          </a>
-          <a href="/admin/usuarios" className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-[#061B44] mb-2">Usuarios</h2>
-            <p className="text-gray-500 text-sm">Ver y gestionar usuarios registrados.</p>
-          </a>
+          {modules.map(m => (
+            <a key={m.href} href={m.href} className="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+              <h2 className="text-lg font-semibold text-[#061B44] mb-2">{m.label}</h2>
+              <p className="text-gray-500 text-sm">{m.desc}</p>
+            </a>
+          ))}
         </div>
       </div>
     </div>
